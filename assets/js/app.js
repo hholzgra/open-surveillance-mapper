@@ -32,51 +32,33 @@ var map = L.map("map", {
 
 var newHydrantCtrl = L.easyButton("uk-icon-plus",
   function (){
-    map.locate({
-      setView: true,
-      maxZoom: 18,
-      enableHighAccuracy: true,
-      maximumAge: 10000,
-      watch: false
-    });
-
-    UIkit.notify({
-      message: "<i class='uk-icon-refresh uk-icon-spin'></i>&nbsp;&nbsp;Finding your location...",
-      status: "info",
-      timeout: 0,
-      pos: "bottom-center"
-    });
-
-    function onLocationFound(e) {
-      if (newMarker) {
-        map.removeLayer(newMarker);
-      }
-
-      newMarker = L.marker(e.latlng, {
-        icon: L.icon({
-          iconUrl: "assets/img/new-marker.png",
-          iconSize: [30, 40],
-          iconAnchor: [15, 32],
-          popupAnchor: [0, -32]
-        }),
-        draggable: true,
-        riseOnHover: true
-      }).bindPopup("<div class='new-marker-popup center-block'><b>Drag marker to adjust location.</b><br>Then tap here to enter info.</div>")
-        .addTo(map);
-
-      newMarker.openPopup();
-
-      $("#latitude").val(newMarker.getLatLng().lat.toFixed(6));
-      $("#longitude").val(newMarker.getLatLng().lng.toFixed(6));
-
-      newMarker.on("dragend", function(e) {
-        $("#latitude").val(newMarker.getLatLng().lat.toFixed(6));
-        $("#longitude").val(newMarker.getLatLng().lng.toFixed(6));
-        newMarker.openPopup();
-      });
+    if (newMarker) {
+      map.removeLayer(newMarker);
     }
 
-    map.once("locationfound", onLocationFound);
+    newMarker = L.marker(map.getCenter(), {
+      icon: L.icon({
+        iconUrl: "assets/img/new-marker.png",
+        iconSize: [30, 40],
+        iconAnchor: [15, 32],
+        popupAnchor: [0, -32]
+      }),
+      draggable: true,
+      riseOnHover: true
+    }).bindPopup("<div class='new-marker-popup center-block'><b>Drag marker to adjust location.</b><br>Then tap here to enter info.</div>")
+      .addTo(map);
+
+    newMarker.openPopup();
+
+    $("#latitude").val(newMarker.getLatLng().lat.toFixed(6));
+    $("#longitude").val(newMarker.getLatLng().lng.toFixed(6));
+
+    newMarker.on("dragend", function(e) {
+      $("#latitude").val(newMarker.getLatLng().lat.toFixed(6));
+      $("#longitude").val(newMarker.getLatLng().lng.toFixed(6));
+      newMarker.openPopup();
+    });
+
     $("#hydrant-form")[0].reset();
     $("#changeset-comment").val("");
     return false;
@@ -180,10 +162,11 @@ var hydrants = L.geoJson(null, {
 }).addTo(map);
 
 var auth = osmAuth({
-  oauth_secret: "XRFHg2QzEfYdMvb6hN2SjXm3JQP82mIpdHhjorDD",
-  oauth_consumer_key: "VIzbQAho1ZWccDm8Bk84ZB37a9keK0w7dRrfOb1Q",
-  //oauth_secret: "VNTqjomsFxHC0Gq1mju5O4nFvfqJ4YspG3qgdYie",
-  //oauth_consumer_key: "iKxQQzJiYIJssqpQTCkl2uBHDnHwT1nE2RsqvkPP",
+  url: 'https://www.openstreetmap.org',
+  oauth_secret: "NOmbk3p5u6FFJtPta9IRSORJgSyJ1OoJ86ejCGr3",
+  oauth_consumer_key: "Vk2A2gne73wgPXMCHJ69YdT5g6sMjDAOCNw9UBlj",
+  // oauth_secret: "EaawS0XcVoqPN594LtkSS4k4vqABedWjChsUmtfU",
+  // oauth_consumer_key: "UuYmurRg8b14prPzcX64De642g6EiRK02lpeSuEw",
   auto: true
 });
 
@@ -362,7 +345,7 @@ function loadHydrants() {
       //url: "http://overpass.osm.rambler.ru/cgi/interpreter?data=[out:json];node("+bounds.toBBoxString().split(",")[1]+","+bounds.toBBoxString().split(",")[0]+","+bounds.toBBoxString().split(",")[3]+","+bounds.toBBoxString().split(",")[2]+")['emergency'='fire_hydrant'];out meta;",
       //url: "http://overpass.osm.rambler.ru/cgi/interpreter?data=[out:xml];node("+bounds.toBBoxString().split(",")[1]+","+bounds.toBBoxString().split(",")[0]+","+bounds.toBBoxString().split(",")[3]+","+bounds.toBBoxString().split(",")[2]+")['emergency'='fire_hydrant'];out meta;",
       //url: "http://master.apis.dev.openstreetmap.org/api/0.6/map?bbox=" + bounds.toBBoxString(),
-      url: "http://www.openstreetmap.org/api/0.6/map?bbox=" + bounds.toBBoxString(),
+      url: "https://www.openstreetmap.org/api/0.6/map?bbox=" + bounds.toBBoxString(),
       //dataType: "json",
       dataType: "xml",
       success: function (json) {
@@ -375,7 +358,7 @@ function loadHydrants() {
         var osm = osmtogeojson(json);
         $.each(osm.features, function(index, feature) {
           $.each(feature.properties.tags, function(tag, value) {
-            if (tag == "emergency" && value == "fire_hydrant") {
+            if (tag == "man_made" && value == "surveillance") {
               hydrants.addData(feature);
             }
           });
