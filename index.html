@@ -36,12 +36,15 @@
         <div class="uk-modal-header">
           <h3>Open Surveillance Mapper</h3>
         </div>
-        <p>OHM is a simple, open source tool for adding and updating surveillance in <a href="http://www.openstreetmap.org" target="_blank">OpenStreetMap</a>, the free and editable map of the world. You can use it to add and update surveillance data in your area, making an open-source and open-data map of the world better for everyone.</p>
+        <p>Open Surveillance Mapper is a simple, open source tool for adding and updating surveillance camera data in <a href="http://www.openstreetmap.org" target="_blank">OpenStreetMap</a>, the free and editable map of the world. You can use it to add and update surveillance cameras in your area, making an open-source and open-data map of the world better for everyone.</p>
         <p class="uk-text-center">
           This application is built with the following open source components:
         </p>
         <div class="uk-panel uk-panel-box uk-panel-box-secondary">
           <dl class="uk-description-list-horizontal">
+            <dt><a href="https://github.com/bmcbride/open-hydrant-mapper" target="_blank">Open Hydrant Mapper</a></dt>
+            <dd class="uk-text-muted">The original implementation this tool is based upon.</dd>
+            <hr><hr>
             <dt><a href="http://getuikit.com/" target="_blank">uikit</a></dt>
             <dd class="uk-text-muted">A lightweight and modular front-end framework for developing fast and powerful web interfaces.</dd>
             <hr>
@@ -68,7 +71,7 @@
           OpenStreetMap® is open data, licensed under the <a href="http://opendatacommons.org/licenses/odbl/">Open Data Commons Open Database License</a> (ODbL) by the <a href="http://osmfoundation.org/">OpenStreetMap Foundation</a> (OSMF).
         </p>
         <p class="uk-text-center">
-          This application was developed by Bryan McBride - <a href="http://bryanmcbride.com" target="_blank">bryanmcbride.com</a>
+          This application was developed by <a href="mailto:hartmut@php.net">Hartmut Holzgraefe</a>, heavily based on original work by Bryan McBride - <a href="http://bryanmcbride.com" target="_blank">bryanmcbride.com</a>
         </p>
       </div>
     </div>
@@ -114,9 +117,9 @@
       <div class="uk-modal-dialog">
         <a class="uk-modal-close uk-close"></a>
         <div class="uk-modal-header">
-          <h3>Hydrant Information</h3>
+          <h3>Surveillance Information</h3>
         </div>
-        <form id="hydrant-form" class="uk-form uk-form-horizontal" autocomplete="off">
+        <form id="surveillance-form" class="uk-form uk-form-horizontal" autocomplete="off">
           <div id="tags">
             <div class="uk-form-row uk-hidden">
               <label class="uk-form-label" for="osm-id">OSM ID</label>
@@ -127,76 +130,58 @@
             <div class="uk-form-row">
               <label class="uk-form-label" for="type">Type</label>
               <div class="uk-form-controls">
-                <input type="text" autocapitalize="none" name="fire_hydrant:type" id="type" list="type-list" data-list-value-completion="true" class="uk-width-1-1">
+                <input type="text" autocapitalize="none" name="surveillance:type" id="type" list="type-list" data-list-value-completion="true" class="uk-width-1-1">
                   <datalist id="type-list">
-                    <option value="underground">
-                    <option value="pillar">
-                    <option value="wall">
-                    <option value="pond">
+                    <option value="camera">
+                    <option value="guart">
+                    <option value="ALPR">
                   </datalist>
               </div>
             </div>
             <div class="uk-form-row">
-              <label class="uk-form-label" for="position">Position</label>
+              <label class="uk-form-label" for="location">Location</label>
               <div class="uk-form-controls">
-                <input type="text" autocapitalize="none" name="fire_hydrant:position" id="position" list="position-list" data-list-value-completion="true" class="uk-width-1-1">
-                  <datalist id="position-list">
-                    <option value="lane">
-                    <option value="parking_lot">
-                    <option value="sidewalk">
-                    <option value="green">
+                <input type="text" autocapitalize="none" name="surveillance" id="location" list="location-list" data-list-value-completion="true" class="uk-width-1-1">
+                  <datalist id="location-list">
+                    <option value="public">
+                    <option value="outdoor">
+                    <option value="indoor">
                   </datalist>
               </div>
             </div>
             <div class="uk-form-row">
-              <label class="uk-form-label" for="source">Water Source</label>
+              <label class="uk-form-label" for="cameratype">Camera type</label>
               <div class="uk-form-controls">
-                <input type="text" autocapitalize="none" name="fire_hydrant:water_source" id="source" list="source-list" data-list-value-completion="true" class="uk-width-1-1">
-                  <datalist id="source-list">
-                    <option value="main">
-                    <option value="pond">
-                    <option value="stream">
+                <input type="text" autocapitalize="none" name="camera:type" id="cameratype" list="cameratype-list" data-list-value-completion="true" class="uk-width-1-1">
+                  <datalist id="cameratype-list">
+                    <option value="fixed">
+                    <option value="panning">
+                    <option value="dome">
                   </datalist>
               </div>
             </div>
             <div class="uk-form-row">
-              <label class="uk-form-label" for="in_service">In Service</label>
+              <label class="uk-form-label" for="operator">Operator</label>
               <div class="uk-form-controls">
-                <input type="text" autocapitalize="none" name="in_service" id="in_service" list="in_service-list" data-list-value-completion="true" class="uk-width-1-1">
-                  <datalist id="in_service-list">
-                    <option value="yes">
-                    <option value="no">
-                  </datalist>
+                <input type="text" autocapitalize="none" autocomplete="on" name="operator" id="operator" class="uk-width-1-1" placeholder="operator name">
               </div>
             </div>
             <div class="uk-form-row">
-              <label class="uk-form-label" for="colour">Color</label>
+              <label class="uk-form-label" for="height">Height</label>
               <div class="uk-form-controls">
-                <input type="text" autocapitalize="none" autocomplete="on" name="colour" id="colour" class="uk-width-1-1" placeholder="dominant color">
+                <input type="number" autocapitalize="none" autocomplete="on" name="height" id="height" class="uk-width-1-1" placeholder="height">
               </div>
             </div>
             <div class="uk-form-row">
-              <label class="uk-form-label" for="name">Name</label>
+              <label class="uk-form-label" for="direction">Direction</label>
               <div class="uk-form-controls">
-                <input type="text" name="name" id="name" class="uk-width-1-1" placeholder="hydrant name or id">
+                <input type="number" name="camera:direction" id="direction" class="uk-width-1-1" placeholder="viewing direction">
               </div>
             </div>
             <div class="uk-form-row">
-              <label class="uk-form-label" for="diameter">Diameter</label>
+              <label class="uk-form-label" for="angle">Angle</label>
               <div class="uk-form-controls">
-                <input type="number" autocapitalize="none" name="fire_hydrant:diameter" id="diameter" class="uk-width-1-1" placeholder="of main feeding hydrant">
-              </div>
-            </div>
-            <div class="uk-form-row">
-              <label class="uk-form-label" for="pressure">Pressure</label>
-              <div class="uk-form-controls">
-                <input type="number" autocapitalize="none" name="fire_hydrant:pressure" id="pressure" class="uk-width-1-1" placeholder="pressure or suction for dry hydrants">
-              </div>
-            </div>
-            <div class="uk-form-row">
-              <label class="uk-form-label" for="count">Count</label>
-              <div class="uk-form-controls">
-                <input type="number" autocapitalize="none" name="fire_hydrant:count" id="count" class="uk-width-1-1" placeholder="if more than 1 hydrant">
+                <input type="number" autocapitalize="none" name="camera:angle" id="angle" class="uk-width-1-1" placeholder="viewing angle">
               </div>
             </div>
             <div class="uk-form-row">
@@ -283,8 +268,8 @@
           <li class="uk-nav-header">About</li>
           <li><a href="#" id="about-btn"><i class="uk-icon-question-circle"></i> About OHM</a></li>
           <li><a href="#" id="credits-btn" data-uk-modal><i class="uk-icon-heart"></i> Credits</a></li>
-          <li><a href="https://twitter.com/brymcbride" target="_blank"><i class="uk-icon-twitter"></i> Follow us</a></li>
-          <li><a href="https://github.com/bmcbride/open-hydrant-mapper" target="_blank"><i class="uk-icon-github-alt"></i> Source code</a></li>
+          <li><a href="https://twitter.com/hartholz_" target="_blank"><i class="uk-icon-twitter"></i> Follow us</a></li>
+          <li><a href="https://github.com/hholzgra/open-surveillance-mapper" target="_blank"><i class="uk-icon-github-alt"></i> Source code</a></li>
         </ul>
       </div>
     </div>
@@ -300,6 +285,7 @@
     <script src="assets/vendor/osmauth.min.js"></script>
     <script src="assets/vendor/easy-button.js"></script>
     <script src="assets/vendor/osmtogeojson.js"></script>
+    <script src="assets/vendor/Semicircle.js"></script>
     <script src="assets/js/app.js"></script>
   </body>
 </html>

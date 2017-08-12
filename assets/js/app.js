@@ -1,17 +1,5 @@
 var selectedFeature, newMarker;
 
-var mapquestOSM = L.tileLayer("http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  subdomains: ["otile1", "otile2", "otile3", "otile4"],
-  attribution: "Tiles courtesy of <a href='http://www.mapquest.com/' target='_blank'>MapQuest</a> <img src='http://developer.mapquest.com/content/osm/mq_logo.png'>. Map data (c) <a href='http://www.openstreetmap.org/' target='_blank'>OpenStreetMap</a> contributors, CC-BY-SA."
-});
-
-var mapquestOAM = L.tileLayer("http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg", {
-  maxZoom: 18,
-  subdomains: ["oatile1", "oatile2", "oatile3", "oatile4"],
-  attribution: "Tiles courtesy of <a href='http://www.mapquest.com/' target='_blank'>MapQuest</a>. Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency"
-});
-
 var mapboxStreets = L.tileLayer('https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYnJ5bWNicmlkZSIsImEiOiJXN1NuOFFjIn0.3YNvR1YOvqEdeSsJDa-JUw', {
   maxZoom: 18,
   attribution: "Map data &copy; <a href='http://openstreetmap.org'>OpenStreetMap</a> contributors, <a href='http://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>, Imagery © <a href='http://mapbox.com'>Mapbox</a>"
@@ -23,9 +11,7 @@ var mapboxHyb = L.tileLayer('https://{s}.tiles.mapbox.com/v4/mapbox.streets-sate
 });
 
 var map = L.map("map", {
-  layers: [mapboxStreets],
-  zoomControl: false,
-  attributionControl: false
+  layers: [mapboxStreets]
 }).on("locationfound", function() {
   UIkit.notify.closeAll();
 }).fitWorld();
@@ -50,20 +36,19 @@ var newHydrantCtrl = L.easyButton("uk-icon-plus",
 
     newMarker.openPopup();
 
-    $("#latitude").val(newMarker.getLatLng().lat.toFixed(6));
-    $("#longitude").val(newMarker.getLatLng().lng.toFixed(6));
-
     newMarker.on("dragend", function(e) {
       $("#latitude").val(newMarker.getLatLng().lat.toFixed(6));
       $("#longitude").val(newMarker.getLatLng().lng.toFixed(6));
       newMarker.openPopup();
     });
 
-    $("#hydrant-form")[0].reset();
+    $("#surveillance-form")[0].reset();
+    $("#latitude").val(map.getCenter().lat.toFixed(6));
+    $("#longitude").val(map.getCenter().lng.toFixed(6));
     $("#changeset-comment").val("");
     return false;
   },
-  "New hydrant"
+  "New Surveillance camera"
 );
 
 var loadDataCtrl = L.easyButton("uk-icon-refresh",
@@ -105,13 +90,42 @@ var locateCtrl = L.control.locate({
   }
 }).addTo(map);
 
+var vectors = L.layerGroup().addTo(map);
+
 var hydrants = L.geoJson(null, {
   pointToLayer: function (feature, latlng) {
+    var iconurl = "assets/img/";
+
+    if (feature.properties.tags['camera:direction']) {
+      var direction = parseFloat(feature.properties.tags['camera:direction']);
+      var angle = 60.0;
+      var rad = 30;
+
+
+      if (feature.properties.tags['camera:angle']) {
+        angle = parseFloat(feature.properties.tags['camera:angle']);
+      }
+
+      vectors.addLayer(L.circle(latlng, {radius: rad, weight: 1, color: 'red', fillColor: 'red'}).setDirection(direction, angle));
+    } else if (feature.properties.tags['camera:type'] == 'dome') {
+      vectors.addLayer(L.circle(latlng, {radius: 30, weight: 1, color: 'red', fillColor: 'red'}));
+    }
+
+    switch (feature.properties.tags['surveillance']) {
+      case 'public':  iconurl += "public/"; break; 
+      case 'outdoor': iconurl += "private/"; break;
+      case 'indoor':  iconurl += "indoor/"; break;
+      default:        iconurl += "unknown/"; break;  
+    }
+    switch (feature.properties.tags['camera:type']) {
+      case 'dome': iconurl += "dome-camera.png"; break;
+      default:     iconurl += "camera.png"; break;
+    }
     return L.marker(latlng, {
       icon: L.icon({
-        iconUrl: "assets/img/fire-hydrant.png",
-        iconSize: [30, 40],
-        iconAnchor: [15, 32]
+        iconUrl: iconurl,
+        iconSize: [32, 32],
+        iconAnchor: [15, 15]
       }),
       title: feature.properties.id,
       riseOnHover: true
@@ -125,27 +139,26 @@ var hydrants = L.geoJson(null, {
           $("#osm-id").val(feature.properties.id);
           $("#latitude").val(feature.geometry.coordinates[1]);
           $("#longitude").val(feature.geometry.coordinates[0]);
-          $("#type").val(feature.properties.tags["fire_hydrant:type"]);
-          $("#position").val(feature.properties.tags["fire_hydrant:position"]);
-          $("#source").val(feature.properties.tags["fire_hydrant:water_source"]);
-          $("#in_service").val(feature.properties.tags["in_service"]);
-          $("#diameter").val(feature.properties.tags["fire_hydrant:diameter"]);
-          $("#pressure").val(feature.properties.tags["fire_hydrant:pressure"]);
-          $("#count").val(feature.properties.tags["fire_hydrant:count"]);
-          $("#colour").val(feature.properties.tags["colour"]);
+          $("#type").val(feature.properties.tags["surveillance:type"]);
+          $("#location").val(feature.properties.tags["surveillance"]);
+          $("#cameratype").val(feature.properties.tags["camera:type"]);
+          $("#operator").val(feature.properties.tags["operator"]);
+          $("#height").val(feature.properties.tags["height"]);
+          $("#direction").val(feature.properties.tags["camera:direction"]);
+          $("#angle").val(feature.properties.tags["camera:angle"]);
           $("#name").val(feature.properties.tags["name"]);
           $("#note").val(feature.properties.tags["note"]);
           // Get array of standard tags from form
           var standardTags = [];
-          $.each( $("#hydrant-form").serializeArray(), function(key, value) {
-            if (value.name != "osm-id" && value.name != "emergency" && value.name != "latitude" && value.name != "longitude") {
+          $.each( $("#surveillance-form").serializeArray(), function(key, value) {
+            if (value.name != "osm-id" && value.name != "man_made" && value.name != "latitude" && value.name != "longitude") {
               standardTags.push(value.name);
             }
           });
           // Append additional tags as simple text inputs
           $(".other-tags").remove();
           $.each(feature.properties.tags, function(key, value) {
-            if ($.inArray(key, standardTags) == -1 && key != "emergency") {
+            if ($.inArray(key, standardTags) == -1 && key != "man_made") {
               $("#tags").append('<div class="uk-form-row other-tags">'+
                 '<label class="uk-form-label" for="' + key + '">' + key + '</label>'+
                 '<div class="uk-form-controls">'+
@@ -165,8 +178,6 @@ var auth = osmAuth({
   url: 'https://www.openstreetmap.org',
   oauth_secret: "NOmbk3p5u6FFJtPta9IRSORJgSyJ1OoJ86ejCGr3",
   oauth_consumer_key: "Vk2A2gne73wgPXMCHJ69YdT5g6sMjDAOCNw9UBlj",
-  // oauth_secret: "EaawS0XcVoqPN594LtkSS4k4vqABedWjChsUmtfU",
-  // oauth_consumer_key: "UuYmurRg8b14prPzcX64De642g6EiRK02lpeSuEw",
   auto: true
 });
 
@@ -225,7 +236,7 @@ $("#save-btn").click(function() {
 
 $("#cancel-btn").click(function() {
   UIkit.modal("#form-modal").hide();
-  $("#hydrant-form")[0].reset();
+  $("#surveillance-form")[0].reset();
   $("#changeset-comment").val("");
   map.closePopup();
   if (newMarker) {
@@ -304,7 +315,7 @@ $(function() {
     $("#geolocate-setting").attr("checked", false);
   }
 
-  if (localStorage.getItem("osm-hydrants-autoload") && localStorage.getItem("osm-hydrants-autoload") == 1) {
+  if (!localStorage.getItem("osm-hydrants-autoload") || localStorage.getItem("osm-hydrants-autoload") == 1) {
     if (map.getZoom() > 15) {
       loadHydrants();
     }
@@ -340,21 +351,12 @@ function loadHydrants() {
       pos: "bottom-center"
     });
     hydrants.clearLayers();
+    vectors.clearLayers();
     var bounds = map.getBounds().pad(0.25);
     $.ajax({
-      //url: "http://overpass.osm.rambler.ru/cgi/interpreter?data=[out:json];node("+bounds.toBBoxString().split(",")[1]+","+bounds.toBBoxString().split(",")[0]+","+bounds.toBBoxString().split(",")[3]+","+bounds.toBBoxString().split(",")[2]+")['emergency'='fire_hydrant'];out meta;",
-      //url: "http://overpass.osm.rambler.ru/cgi/interpreter?data=[out:xml];node("+bounds.toBBoxString().split(",")[1]+","+bounds.toBBoxString().split(",")[0]+","+bounds.toBBoxString().split(",")[3]+","+bounds.toBBoxString().split(",")[2]+")['emergency'='fire_hydrant'];out meta;",
-      //url: "http://master.apis.dev.openstreetmap.org/api/0.6/map?bbox=" + bounds.toBBoxString(),
-      url: "https://www.openstreetmap.org/api/0.6/map?bbox=" + bounds.toBBoxString(),
-      //dataType: "json",
-      dataType: "xml",
+      url: "https://overpass-api.de/api/interpreter?data=[out:json];node("+bounds.toBBoxString().split(",")[1]+","+bounds.toBBoxString().split(",")[0]+","+bounds.toBBoxString().split(",")[3]+","+bounds.toBBoxString().split(",")[2]+")['man_made'='surveillance'];out+meta;",
+      dataType: "json",
       success: function (json) {
-        /*$(json).find("tag").each(function (item, value) {
-          if ($(value).attr("k") == "emergency" && $(value).attr("v") == "fire_hydrant") {
-            //console.log(value);
-          }
-        });*/
-        //hydrants.addData(osmtogeojson(json));
         var osm = osmtogeojson(json);
         $.each(osm.features, function(index, feature) {
           $.each(feature.properties.tags, function(tag, value) {
@@ -409,7 +411,7 @@ function createChangeset() {
   });
   var newChangeset = "<osm>" +
     "<changeset>" +
-      "<tag k='created_by' v='Open Hydrant Mapper'/>" +
+      "<tag k='created_by' v='Open Surveillance Mapper'/>" +
       "<tag k='comment' v='" + $("#changeset-comment").val() + "'/>" +
     "</changeset>" +
   "</osm>";
@@ -434,7 +436,7 @@ function createChangeset() {
 
 function uploadNode(changeset_id) {
   var osmID, nodeType, version, node;
-  $.each($("#hydrant-form").serializeArray(), function(index, tag) {
+  $.each($("#surveillance-form").serializeArray(), function(index, tag) {
     if (tag.name === "osm-id") {
       if (tag.value.length > 0) {
         osmID = tag.value;
@@ -447,7 +449,7 @@ function uploadNode(changeset_id) {
         version = "0";
         node = "<osmChange><create>";
       }
-      node += "<node id='" + osmID + "' lon='" + $("#longitude").val() + "' lat='" + $("#latitude").val() + "' version='" + version + "' changeset='" + changeset_id + "'><tag k='emergency' v='fire_hydrant'/>";
+      node += "<node id='" + osmID + "' lon='" + $("#longitude").val() + "' lat='" + $("#latitude").val() + "' version='" + version + "' changeset='" + changeset_id + "'><tag k='man_made' v='surveillance'/>";
     } else if (tag.value.length > 0 && tag.name !== "latitude" && tag.name !== "longitude") {
       node += "<tag k='" + tag.name + "' v='" + tag.value + "'/>";
     }
@@ -484,7 +486,7 @@ function uploadNode(changeset_id) {
           $("#gplus-share-btn").attr("href", "https://plus.google.com/share?url=http://www.openstreetmap.org/changeset/" + changeset_id);
           UIkit.notify.closeAll();
           UIkit.modal("#share-modal").show();
-          $("#hydrant-form")[0].reset();
+          $("#surveillance-form")[0].reset();
           $("#changeset-comment").val("");
           if (newMarker) {
             map.removeLayer(newMarker);
